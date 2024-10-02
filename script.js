@@ -8,6 +8,8 @@ const closeModalBtn = document.getElementById("close-modal-btn");
 const cartCounter = document.getElementById("cart-count");
 const addressInput = document.getElementById("address");
 const addressWarn = document.getElementById("address-warn");
+const nameInput = document.getElementById("name-client");
+const nameWarn = document.getElementById("name-warn");
 
 
 let cart = [];
@@ -16,7 +18,7 @@ let cart = [];
 cartBtn.addEventListener("click", function () {
   updateCartModal();
   cartModal.style.display = "flex"
-  
+
 });
 
 //fechar o modal quando clicar fora
@@ -89,43 +91,43 @@ function updateCartModal() {
       </div>  
     
     `
-      total += item.price * item.quantity;
+    total += item.price * item.quantity;
     cartItemsContainer.appendChild(cartItemElement);
   })
 
-    cartTotal.textContent = total.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL"
+  cartTotal.textContent = total.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL"
 
   });
 
-    cartCounter.innerHTML = cart.length;
+  cartCounter.innerHTML = cart.length;
 
 }
 
 
 //Remover item do carrinho
 cartItemsContainer.addEventListener("click", function (event) {
-  if(event.target.classList.contains("remove-from-cart-btn")){
+  if (event.target.classList.contains("remove-from-cart-btn")) {
     const name = event.target.getAttribute("data-name");
 
     removeItemCart(name);
   }
 })
 
-function removeItemCart(name){
-  const index = cart.findIndex(item => item.name ===name);
+function removeItemCart(name) {
+  const index = cart.findIndex(item => item.name === name);
 
-  if(index !== -1){
+  if (index !== -1) {
     const item = cart[index];
 
-    if(item.quantity > 1){
+    if (item.quantity > 1) {
       item.quantity -= 1;
       updateCartModal();
       return;
     }
 
-    cart.splice(index,1);
+    cart.splice(index, 1);
     updateCartModal();
 
   }
@@ -135,22 +137,102 @@ function removeItemCart(name){
 
 //Salvar endereço
 
-addressInput.addEventListener("input", function(event){
+function validateAddress() {
+  const inputValue = addressInput.value.trim();
 
-  let inputValue = event.target.value;
-
-  //
-
-})
-
-//finalizar o carrinho
-checkoutBtn.addEventListener("click", function(){
-  if(cart.length === 0) return;
-  if(addressInput.value === ""){
+  if (inputValue === "") {
     addressWarn.classList.remove("hidden");
     addressInput.classList.add("border-red-500");
-
-    return;
+    return false;
+  } else {
+    addressWarn.classList.add("hidden");
+    addressInput.classList.remove("border-red-500");
+    return true;
   }
+}
 
+
+//Salvar o nome
+function validateName() {
+  const inputName = nameInput.value.trim();
+
+  if (inputName === "") {
+    nameWarn.classList.remove("hidden");
+    nameInput.classList.add("border-red-500");
+    return false;
+  } else {
+    nameWarn.classList.add("hidden");
+    nameInput.classList.remove("border-red-500");
+    return true;
+  }
+}
+//finalizar o pedido
+checkoutBtn.addEventListener("click", function () {
+  /*   const isOpen = checkRestaurantOpen();
+    if(!isOpen){
+       alert("Restaurante fechado no momento");
+        return;
+    } */
+
+  if (cart.length === 0) return;
+
+    // Validação do campo de endereço e nome
+    const isAddressValid = validateAddress();
+    const isNameValid = validateName();
+
+     // Se qualquer validação falhar, o envio é interrompido
+    if (!isAddressValid || !isNameValid) return;
+
+    //enviar o pedido para api WhatsApp
+  const cartItems = cart.map((item) => {
+    return (
+      `(${item.quantity}) ${item.name} R$ ${item.price.toFixed(2)} | `
+    )
+
+  }).join(" | ");
+  // Monta a mensagem para o WhatsApp
+  const message = encodeURIComponent(`Olá, gostaria de fazer o pedido: ${cartItems}`);
+  const total = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
+
+  // Número de telefone do restaurante (substituir ao fazer commit)
+  const phone = "21997896127";
+
+  // Abre o WhatsApp com os dados do pedido
+  window.open(`https://wa.me/${phone}?text=${message}%0A
+    Endereço: ${encodeURIComponent(addressInput.value)}%0A
+    Nome: ${encodeURIComponent(nameInput.value)}%0A
+    Total: R$ ${total.toFixed(2)}`, "_blank");
+
+  // Limpa o carrinho e atualiza a interface
+  cart.length = 0;
+  updateCartModal();
+
+   // Limpa os campos de nome e endereço
+   nameInput.value = "";
+   addressInput.value = "";
+
+ 
 })
+
+
+
+//verificar a hora e manipular o card horário
+function checkRestaurantOpen() {
+  const data = new Date();
+  const hora = data.getHours();
+  const minutos = data.getMinutes();
+  return (hora >= 18 && (hora < 23 || (hora === 23 && minutos <= 59)));
+
+
+}
+
+const spanItem = document.getElementById("date-span");
+const isOpen = checkRestaurantOpen(); //verifica se é true (se restaurante está aberto na hora certa)
+
+if (isOpen) {
+  spanItem.classList.remove("bg-red-500");
+  spanItem.classList.add("bg-green-500");
+} else {
+  spanItem.classList.remove("bg-green-500");
+  spanItem.classList.add("bg-red-500");
+}
