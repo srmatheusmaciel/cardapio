@@ -195,7 +195,7 @@ checkoutBtn.addEventListener("click", function () {
   const total = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
   // Número de telefone do restaurante (substituir ao fazer commit)
-  const phone = "21997896127";
+  const phone = "";
 
   // Abre o WhatsApp com os dados do pedido
   window.open(`https://wa.me/${phone}?text=${message}%0A
